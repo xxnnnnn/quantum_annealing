@@ -4,12 +4,12 @@ import math
 
 #%%
 # classical Algorithm:
-def simulated_annealing_solution(N, hypergraph, planted_solution, max_iterations, initial_temperature=100, cooling_rate=0.99):
+def simulated_annealing_solution(N, hypergraph, max_iterations, initial_temperature=100, cooling_rate=0.99):
     # Initialize the current solution and best solution
     current_solution = [random.choice([1, -1]) for _ in range(N)]
-    best_solution = planted_solution[:]
     current_satisfied = count_satisfied_constraints(hypergraph, current_solution)
     max_satisfied = current_satisfied
+    best_solution = current_solution
 
     # Set the initial temperature
     temperature = initial_temperature
@@ -44,12 +44,12 @@ def simulated_annealing_solution(N, hypergraph, planted_solution, max_iterations
     return best_solution, max_satisfied
 
 
-def greedy_solution(N, hypergraph, planted_solution):
+def greedy_solution(N, hypergraph):
     # Initialize the current solution randomly
     current_solution = [random.choice([1, -1]) for _ in range(N)]
-    best_solution = planted_solution[:]
-    max_satisfied = count_satisfied_constraints(hypergraph, current_solution)
 
+    max_satisfied = count_satisfied_constraints(hypergraph, current_solution)
+    best_solution = current_solution[:]
     # Flag to check if any improvement was made in the current iteration
     improvement = True
 
@@ -133,6 +133,21 @@ def reverse_annealing_solution(N,string_seed,constraints,steps=100):
     return reverse_solution, reverse_satisfied
 
 #%%
+def total_annealing_tran_solution(N, string_seed, constraints, iterations):
+    tf = iterations * N
+    omega = 2 * np.pi * 6 * np.log(N)
+    dt = 0.4 / omega
+
+    times, psi_times = evolution_tran(N, string_seed, tf, dt, constraints)
+    measured_seed = do_measurement(psi_times[-1], N)
+
+
+    total_solution_tran = measured_seed
+    total_satisfied_tran = count_satisfied_constraints(constraints, total_solution_tran)
+    return total_solution_tran, total_satisfied_tran
+
+
+#%%
 def iterative_annealing_tran_solution(N, string_seed, constraints, iterations):
     tf = N
     omega = 2 * np.pi * 6 * np.log(N)
@@ -140,7 +155,7 @@ def iterative_annealing_tran_solution(N, string_seed, constraints, iterations):
 
     times, psi_times = evolution_tran(N, string_seed, tf, dt, constraints)
     measured_seed = do_measurement(psi_times[-1], N)
-    print('measured_seed =', measured_seed)
+
 
     if iterations > 1:
         return iterative_annealing_tran_solution(N, measured_seed, constraints, iterations - 1)

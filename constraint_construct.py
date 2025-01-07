@@ -1,6 +1,6 @@
 import random
 
-def construct_ppsp_instance(N,proportion=2,epsilon=0.1):
+def construct_ppsp_instance(N,epsilon=0.1,proportion=2):
     # Number of constraints (NC >> N)
     NC = int(proportion * N)  # Arbitrary value ensuring NC >> N
 
