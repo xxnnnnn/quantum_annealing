@@ -24,7 +24,7 @@ def compare_iterative_tran_algorithm(N_values,iterations=5,epsilon=0.1,num_trial
             classical_solution, classical_satisfied = simulated_annealing_solution(N, constraints, max_iterations=100)
             classical_satisfied_ratio += classical_satisfied / classical_satisfied
 
-            iterative_tran_solution, iterative_tran_satisfied = iterative_annealing_tran_solution(N,planted_solution,constraints,iterations)
+            iterative_tran_solution, iterative_tran_satisfied,_ = iterative_annealing_tran_solution(N,planted_solution,constraints,iterations)
             iterative_tran_satisfied_ratio += iterative_tran_satisfied / classical_satisfied
 
             total_tran_solution, total_tran_satisfied = total_annealing_tran_solution(N,planted_solution,constraints,iterations)
@@ -53,6 +53,6 @@ def compare_iterative_tran_algorithm(N_values,iterations=5,epsilon=0.1,num_trial
 
 
 if __name__ == '__main__':
-    N_values = [4,5,6,7,8]
+    N_values = list(range(4, 13))
     compare_iterative_tran_algorithm(N_values,iterations=5,epsilon=0.1,num_trials=50)
 

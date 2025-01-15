@@ -74,6 +74,7 @@ def greedy_solution(N, hypergraph):
 
 
 def simulated_annealing_for_hybrid_solution(N, hypergraph, planted_solution, max_iterations, initial_temperature=100, cooling_rate=0.99):
+    # 后面量子退火如果要用到SA的话就是这个函数，会传参的这个函数，上面的SA是随机的纯SA
     # Initialize the current solution and best solution
     current_solution = planted_solution[:]
     best_solution = current_solution[:]
@@ -123,6 +124,7 @@ def forward_annealing_solution(N, constraints, steps=100):
 
     return forward_solution, forward_satisfied
 
+
 def reverse_annealing_solution(N,string_seed,constraints,steps=100):
     t_f = N
     dt =t_f / steps
@@ -147,99 +149,8 @@ def total_annealing_tran_solution(N, string_seed, constraints, iterations):
     return total_solution_tran, total_satisfied_tran
 
 
-#%%
+
 def iterative_annealing_tran_solution(N, string_seed, constraints, iterations):
-    tf = N
-    omega = 2 * np.pi * 6 * np.log(N)
-    dt = 0.4 / omega
-
-    times, psi_times = evolution_tran(N, string_seed, tf, dt, constraints)
-    measured_seed = do_measurement(psi_times[-1], N)
-
-
-    if iterations > 1:
-        return iterative_annealing_tran_solution(N, measured_seed, constraints, iterations - 1)
-    else:
-        iterative_solution_tran = measured_seed
-        iterative_satisfied_tran = count_satisfied_constraints(constraints, iterative_solution_tran)
-        return iterative_solution_tran, iterative_satisfied_tran
-
-
-def iterative_annealing_long_solution(N, string_seed, constraints, iterations, steps=100):
-    tf = N
-    dt = tf / steps
-
-    times, psi_times = evolution_long(N, string_seed, tf, dt, constraints)
-    measured_seed = do_measurement(psi_times[-1], N)
-    print('measured_seed =', measured_seed)
-
-    if iterations > 1:
-        return iterative_annealing_long_solution(N, measured_seed, constraints, iterations - 1)
-    else:
-        iterative_solution_long = measured_seed
-        iterative_satisfied_long = count_satisfied_constraints(constraints, iterative_solution_long)
-        return iterative_solution_long, iterative_satisfied_long
-
-
-#%%
-def iterative_sa_tran_hybrid_solution(N, string_seed, constraints, iterations, satisfied=0):
-    tf = N
-    omega = 2 * np.pi * 6 * np.log(N)
-    dt = 0.4 / omega
-
-
-    times, psi_times = evolution_tran(N, string_seed, tf, dt, constraints)
-    measured_seed = do_measurement(psi_times[-1], N)
-    measured_satisfied = count_satisfied_constraints(constraints, measured_seed)
-    print('measured_seed =', measured_seed)
-    print('measured_satisfied =', measured_satisfied)
-
-    if measured_satisfied >= satisfied:
-        string_seed = measured_seed
-
-
-    best_solution, satisfied = simulated_annealing_for_hybrid_solution(N, constraints, string_seed, iterations)
-    string_seed = best_solution
-    print('Best solution =', best_solution)
-    print('Satisfied =', satisfied)
-
-
-    if iterations > 1:
-        return iterative_sa_tran_hybrid_solution(N, string_seed, constraints, iterations - 1, satisfied)
-    else:
-        reverse_solution_tran_hybrid = string_seed
-        reverse_satisfied_tran_hybrid = satisfied
-        return reverse_solution_tran_hybrid, reverse_satisfied_tran_hybrid
-
-
-def iterative_sa_long_hybrid_solution(N, string_seed, constraints, iterations,satisfied=0, steps=100):
-    tf = N
-    dt = tf / steps
-
-    times, psi_times = evolution_long(N, string_seed, tf, dt, constraints)
-    measured_seed = do_measurement(psi_times[-1], N)
-    measured_satisfied = count_satisfied_constraints(constraints, measured_seed)
-    print('measured_seed =', measured_seed)
-    print('measured_satisfied =', measured_satisfied)
-
-    if measured_satisfied >= satisfied:
-        string_seed = measured_seed
-
-
-    best_solution, satisfied = simulated_annealing_for_hybrid_solution(N, constraints, string_seed, iterations)
-    string_seed = best_solution
-    print('Best solution =', best_solution)
-    print('Satisfied =', satisfied)
-
-    if iterations > 1:
-        return iterative_sa_long_hybrid_solution(N, string_seed, constraints, iterations - 1, satisfied)
-    else:
-        reverse_solution_long_hybrid = string_seed
-        reverse_satisfied_long_hybrid = satisfied
-        return reverse_solution_long_hybrid, reverse_satisfied_long_hybrid
-
-#%%
-def iterative_annealing_tran_solution_for_plot(N, string_seed, constraints, iterations):
     tf = N
     omega = 2 * np.pi * 6 * np.log(N)
     dt = 0.4 / omega
@@ -250,10 +161,10 @@ def iterative_annealing_tran_solution_for_plot(N, string_seed, constraints, iter
     times, psi_times = evolution_tran(N, string_seed, tf, dt, constraints)
     measured_seed = do_measurement(psi_times[-1], N)
     solutions.append(measured_seed)  # 记录解
-    print('measured_seed =', measured_seed)
+    print(f'横向迭代退火中第{iterations}次的measured_seed =', measured_seed)
 
     if iterations > 1:
-        next_solution, next_satisfied, next_solutions = iterative_annealing_tran_solution_for_plot(N, measured_seed, constraints, iterations - 1)
+        next_solution, next_satisfied, next_solutions = iterative_annealing_tran_solution(N, measured_seed, constraints, iterations - 1)
         solutions.extend(next_solutions)  # 合并解的记录
         return next_solution, next_satisfied, solutions
     else:
@@ -261,8 +172,8 @@ def iterative_annealing_tran_solution_for_plot(N, string_seed, constraints, iter
         iterative_satisfied_tran = count_satisfied_constraints(constraints, iterative_solution_tran)
         return iterative_solution_tran, iterative_satisfied_tran, solutions
 
-
-def iterative_annealing_long_solution_for_plot(N, string_seed, constraints, iterations, steps=100):
+#%%
+def iterative_annealing_long_solution(N, string_seed, constraints, iterations, steps=100):
     tf = N
     dt = tf / steps
 
@@ -272,10 +183,10 @@ def iterative_annealing_long_solution_for_plot(N, string_seed, constraints, iter
     times, psi_times = evolution_long(N, string_seed, tf, dt, constraints)
     measured_seed = do_measurement(psi_times[-1], N)
     solutions.append(measured_seed)  # 记录解
-    print('measured_seed =', measured_seed)
+    print(f'纵向迭代退火的第{iterations}次的measured_seed =', measured_seed)
 
     if iterations > 1:
-        next_solution, next_satisfied, next_solutions = iterative_annealing_long_solution_for_plot(N, measured_seed, constraints, iterations - 1, steps)
+        next_solution, next_satisfied, next_solutions = iterative_annealing_long_solution(N, measured_seed, constraints, iterations - 1, steps)
         solutions.extend(next_solutions)  # 合并解的记录
         return next_solution, next_satisfied, solutions
     else:
@@ -284,7 +195,8 @@ def iterative_annealing_long_solution_for_plot(N, string_seed, constraints, iter
         return iterative_solution_long, iterative_satisfied_long, solutions
 
 
-def iterative_sa_tran_hybrid_solution_for_plot(N, string_seed, constraints, iterations, satisfied=0):
+#%%
+def iterative_sa_tran_hybrid_solution(N, string_seed, constraints, iterations, satisfied=0):
     tf = N
     omega = 2 * np.pi * 6 * np.log(N)
     dt = 0.4 / omega
@@ -308,7 +220,7 @@ def iterative_sa_tran_hybrid_solution_for_plot(N, string_seed, constraints, iter
     print('Satisfied =', satisfied)
 
     if iterations > 1:
-        next_solution, next_satisfied, next_solutions = iterative_sa_tran_hybrid_solution_for_plot(N, string_seed, constraints, iterations - 1, satisfied)
+        next_solution, next_satisfied, next_solutions = iterative_sa_tran_hybrid_solution(N, string_seed, constraints, iterations - 1, satisfied)
         solutions.extend(next_solutions)  # 合并解的记录
         return next_solution, next_satisfied, solutions
     else:
@@ -317,7 +229,8 @@ def iterative_sa_tran_hybrid_solution_for_plot(N, string_seed, constraints, iter
         return reverse_solution_tran_hybrid, reverse_satisfied_tran_hybrid, solutions
 
 
-def iterative_sa_long_hybrid_solution_for_plot(N, string_seed, constraints, iterations, satisfied=0, steps=100):
+
+def iterative_sa_long_hybrid_solution(N, string_seed, constraints, iterations,satisfied=0, steps=100):
     tf = N
     dt = tf / steps
 
@@ -340,7 +253,7 @@ def iterative_sa_long_hybrid_solution_for_plot(N, string_seed, constraints, iter
     print('Satisfied =', satisfied)
 
     if iterations > 1:
-        next_solution, next_satisfied, next_solutions = iterative_sa_long_hybrid_solution_for_plot(N, string_seed, constraints, iterations - 1, satisfied, steps)
+        next_solution, next_satisfied, next_solutions = iterative_sa_long_hybrid_solution(N, string_seed, constraints, iterations - 1, satisfied, steps)
         solutions.extend(next_solutions)  # 合并解的记录
         return next_solution, next_satisfied, solutions
     else:

@@ -3,7 +3,7 @@ import plotly.graph_objects as go
 from scipy.interpolate import griddata
 from scipy.ndimage import gaussian_filter
 from constraint_construct import construct_ppsp_instance, count_satisfied_constraints
-from algorithm import iterative_annealing_long_solution_for_plot, iterative_annealing_tran_solution_for_plot, iterative_sa_long_hybrid_solution_for_plot, iterative_sa_tran_hybrid_solution_for_plot
+from algorithm import iterative_annealing_long_solution, iterative_annealing_tran_solution, iterative_sa_long_hybrid_solution, iterative_sa_tran_hybrid_solution
 
 #%% Constants
 PAD_WIDTH = 2  # Padding for the energy matrix
@@ -208,8 +208,8 @@ def plot_evolution_trajectories(matrix, n, constraints, planted_solution, algori
 
 
 #%% Main Function
-def main():
-    N = 4  # Bitstring length
+def main(n):
+    N = n  # Bitstring length
     constraints, planted_solution = construct_ppsp_instance(N)
     matrix = create_gray_code_matrix(N)
 
@@ -219,15 +219,15 @@ def main():
 
     # Generate solutions for each algorithm
     algo_solutions = [
-        iterative_annealing_long_solution_for_plot(N, planted_solution, constraints, iterations=5),
-        iterative_annealing_tran_solution_for_plot(N, planted_solution, constraints, iterations=5),
-        iterative_sa_long_hybrid_solution_for_plot(N, planted_solution, constraints, iterations=5),
-        iterative_sa_tran_hybrid_solution_for_plot(N, planted_solution, constraints, iterations=5)
+        iterative_annealing_long_solution(N, planted_solution, constraints, iterations=5),
+        iterative_annealing_tran_solution(N, planted_solution, constraints, iterations=5),
+        # iterative_sa_long_hybrid_solution(N, planted_solution, constraints, iterations=5),
+        # iterative_sa_tran_hybrid_solution(N, planted_solution, constraints, iterations=5)
     ]
-    print(f"algo{[len(i[2]) for i in algo_solutions]}")
 
     # Plot evolution trajectories for all algorithms
     plot_evolution_trajectories(matrix, N, constraints, planted_solution, algo_solutions)
 
 if __name__ == '__main__':
-    main()
+    N = 4
+    main(N)
