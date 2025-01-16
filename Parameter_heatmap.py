@@ -13,10 +13,14 @@ def parameter_heatmap(n_list, discrete_num, num_trials=10):
     fig, axes = plt.subplots(rows, cols, figsize=(fig_width, fig_height))
     axes = axes.flatten()
 
+    alpha_ini = 0.01
+    alpha_final = 1
+    f_ini = 0.01
+    f_final = 1
     for idx, (N, ax) in enumerate(zip(n_list, axes)):
         # 定义参数范围
-        alpha_values = np.linspace(0.5 * np.log(N), 1.5 * np.log(N), discrete_num)
-        omega_values = np.linspace(2 * np.pi * np.log(N), 10 * np.pi * np.log(N), discrete_num)
+        alpha_values = np.linspace(alpha_ini * np.log(N), alpha_final * np.log(N), discrete_num)
+        omega_values = np.linspace(f_ini * 2 * np.pi * np.log(N), f_final * 2 * np.pi * np.log(N), discrete_num)
 
         # 初始化结果矩阵
         results = np.zeros((discrete_num, discrete_num))
@@ -32,7 +36,7 @@ def parameter_heatmap(n_list, discrete_num, num_trials=10):
                 # 累积满意约束数量以计算平均
                 total_satisfied = 0
                 for trial in range(num_trials):
-                    _, psi_times = evolution_tran(N, string_seed, tf, dt, constraints, alpha, omega)
+                    _, psi_times, _ = evolution_tran(N, string_seed, tf, dt, constraints, alpha, omega)
                     measured_seed = do_measurement(psi_times[-1], N)
                     satisfied_constraints = count_satisfied_constraints(constraints, measured_seed)
                     total_satisfied += satisfied_constraints
@@ -72,8 +76,9 @@ def parameter_heatmap(n_list, discrete_num, num_trials=10):
 
 
 def main():
-    n_list = [4, 5, 6, 7, 8, 9,10]
-    discrete_num = 2
+    n_list = list(range(4,6))
+    print(n_list)
+    discrete_num = 10
     num_trials = 10
     parameter_heatmap(n_list, discrete_num, num_trials)
 

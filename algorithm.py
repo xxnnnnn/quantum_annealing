@@ -3,7 +3,6 @@ from constraint_construct import *
 import math
 
 #%%
-# classical Algorithm:
 def simulated_annealing_solution(N, hypergraph, max_iterations, initial_temperature=100, cooling_rate=0.99):
     # Initialize the current solution and best solution
     current_solution = [random.choice([1, -1]) for _ in range(N)]
@@ -128,7 +127,7 @@ def forward_annealing_solution(N, constraints, steps=100):
 def reverse_annealing_solution(N,string_seed,constraints,steps=100):
     t_f = N
     dt =t_f / steps
-    times, psi_times = evolution_long(N, string_seed, t_f, dt, constraints)
+    times, psi_times, _ = evolution_long(N, string_seed, t_f, dt, constraints)
     reverse_solution = do_measurement(psi_times[-1], N)
     reverse_satisfied = count_satisfied_constraints(constraints, reverse_solution)
 
@@ -136,41 +135,76 @@ def reverse_annealing_solution(N,string_seed,constraints,steps=100):
 
 #%%
 def total_annealing_tran_solution(N, string_seed, constraints, iterations):
-    tf = iterations * N
+    tf = iterations * N  # 总退火时间
     omega = 2 * np.pi * 6 * np.log(N)
     dt = 0.4 / omega
 
-    times, psi_times = evolution_tran(N, string_seed, tf, dt, constraints)
+
+    entropies_list = []
+
+    # 执行量子演化
+    times, psi_times, entropies = evolution_tran(N, string_seed, tf, dt, constraints)
+    entropies_list.append(entropies[0])
+    # 获取每个 T 时间单位的熵，并将其记录（T, 2T, 3T, ..., mT）
+    for i in range(1, iterations + 1):
+        nodes = int(tf/(dt*iterations))
+        T_time = int(i * nodes)
+        entropies_list.append(entropies[T_time])  # 记录 T 时间点的熵
+
+    # 在最后一个时间刻测量解
     measured_seed = do_measurement(psi_times[-1], N)
 
-
+    # 计算最终的解是否满足约束条件
     total_solution_tran = measured_seed
     total_satisfied_tran = count_satisfied_constraints(constraints, total_solution_tran)
-    return total_solution_tran, total_satisfied_tran
+
+    return total_solution_tran, total_satisfied_tran, entropies_list
 
 
-
-def iterative_annealing_tran_solution(N, string_seed, constraints, iterations):
+def iterative_annealing_tran_solution(N, string_seed, constraints, iterations, is_first_iteration=True):
     tf = N
     omega = 2 * np.pi * 6 * np.log(N)
     dt = 0.4 / omega
 
-    # 用于记录每次迭代的解
+    # 用于记录每次迭代的解和熵
     solutions = []
+    entropies_list = []  # 用于存储每次迭代的熵
 
-    times, psi_times = evolution_tran(N, string_seed, tf, dt, constraints)
+    # 执行初始的量子演化
+    times, psi_times, entropies = evolution_tran(N, string_seed, tf, dt, constraints)
+
+    # 如果是第一次迭代，记录初始时刻的熵
+    if is_first_iteration:
+        entropies_list.append(entropies[0])  # 记录初始时刻的熵
+
+    # 初始解的测量
     measured_seed = do_measurement(psi_times[-1], N)
     solutions.append(measured_seed)  # 记录解
-    print(f'横向迭代退火中第{iterations}次的measured_seed =', measured_seed)
 
+    # 记录当前迭代的熵（每次迭代结束时的最后一个时刻的熵）
+    entropies_list.append(entropies[-1])  # 获取最后一个时间刻的熵
+
+    # 如果还需要继续迭代
     if iterations > 1:
-        next_solution, next_satisfied, next_solutions = iterative_annealing_tran_solution(N, measured_seed, constraints, iterations - 1)
-        solutions.extend(next_solutions)  # 合并解的记录
-        return next_solution, next_satisfied, solutions
+        # 递归调用，获取下次迭代的解和熵列表，并且标记后续迭代不是第一次
+        next_solution, next_satisfied, next_solutions, next_entropies_list = iterative_annealing_tran_solution(
+            N, measured_seed, constraints, iterations - 1, is_first_iteration=False
+        )
+
+        # 合并解的记录
+        solutions.extend(next_solutions)
+        # 合并熵的记录，获取下一次的熵
+        entropies_list.extend(next_entropies_list)
+
+        return next_solution, next_satisfied, solutions, entropies_list
+
     else:
+        # 最终解和熵列表
         iterative_solution_tran = measured_seed
         iterative_satisfied_tran = count_satisfied_constraints(constraints, iterative_solution_tran)
-        return iterative_solution_tran, iterative_satisfied_tran, solutions
+        return iterative_solution_tran, iterative_satisfied_tran, solutions, entropies_list
+
+
 
 #%%
 def iterative_annealing_long_solution(N, string_seed, constraints, iterations, steps=100):
@@ -180,7 +214,7 @@ def iterative_annealing_long_solution(N, string_seed, constraints, iterations, s
     # 用于记录每次迭代的解
     solutions = []
 
-    times, psi_times = evolution_long(N, string_seed, tf, dt, constraints)
+    times, psi_times, _ = evolution_long(N, string_seed, tf, dt, constraints)
     measured_seed = do_measurement(psi_times[-1], N)
     solutions.append(measured_seed)  # 记录解
     print(f'纵向迭代退火的第{iterations}次的measured_seed =', measured_seed)
@@ -204,7 +238,7 @@ def iterative_sa_tran_hybrid_solution(N, string_seed, constraints, iterations, s
     # 用于记录每次迭代的解
     solutions = []
 
-    times, psi_times = evolution_tran(N, string_seed, tf, dt, constraints)
+    times, psi_times,_ = evolution_tran(N, string_seed, tf, dt, constraints)
     measured_seed = do_measurement(psi_times[-1], N)
     measured_satisfied = count_satisfied_constraints(constraints, measured_seed)
     print('measured_seed =', measured_seed)
@@ -237,7 +271,7 @@ def iterative_sa_long_hybrid_solution(N, string_seed, constraints, iterations,sa
     # 用于记录每次迭代的解
     solutions = []
 
-    times, psi_times = evolution_long(N, string_seed, tf, dt, constraints)
+    times, psi_times, _ = evolution_long(N, string_seed, tf, dt, constraints)
     measured_seed = do_measurement(psi_times[-1], N)
     measured_satisfied = count_satisfied_constraints(constraints, measured_seed)
     print('measured_seed =', measured_seed)

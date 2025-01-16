@@ -69,6 +69,7 @@ def evolution_long(N, string_seed, tf, dt, constraints):
     psi_times = results.states
     for psi in psi_times:
         psi.dims = tensor_dims
+
     return times, psi_times
 
 # Hp,Hm,Hst are the Hamiltonians
@@ -94,9 +95,14 @@ def evolution_tran(N, string_seed, tf, dt, constraints,alpha=1, omega=1):
     psi_0 = tensor([(basis(2, 0) + basis(2, 1)).unit() for _  in range(N)])
     results = sesolve(H, psi_0, times, args = args)
     psi_times = results.states
+
+    entropies = get_entropies(psi_times)
+
     for psi in psi_times:
         psi.dims = tensor_dims
-    return times, psi_times
+
+
+    return times, psi_times, entropies
 
 # Hp,Hm are the Hamiltonians,the most classical case
 def evolution(N, tf, dt, constraints):
@@ -109,8 +115,12 @@ def evolution(N, tf, dt, constraints):
     psi_0 = tensor([(basis(2, 0) + basis(2, 1)).unit() for _  in range(N)])
     results = sesolve(H, psi_0, times, args = args)
     psi_times = results.states
+
+
     for psi in psi_times:
         psi.dims = tensor_dims
+
+
     return times, psi_times
 
 #%%
@@ -123,6 +133,10 @@ def get_probabilities(psi_times):
         probabilities.append(probs)
     return np.array(probabilities)  # shape: (num_times, 2^N)
 
+def get_entropies(psi_times):
+    probabilities = get_probabilities(psi_times)
+    entropies = -np.sum(probabilities * np.log(probabilities), axis=1)
+    return entropies
 
 def do_measurement(psi, N):
     state_vector = psi.full().flatten()  # 获取态向量
@@ -148,3 +162,5 @@ def ground_prob(H, psi, tol=1e-10):
     prob = abs((psi.dag() * P_gs * psi))  # This is the correct projection calculation
 
     return prob
+
+
